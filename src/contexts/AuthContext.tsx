@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { setCartUser } from "@/lib/store";
 
 interface AuthContextType {
   session: Session | null;
@@ -23,12 +24,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      setCartUser(session?.user?.id ?? null);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      setCartUser(session?.user?.id ?? null);
     });
 
     return () => subscription.unsubscribe();

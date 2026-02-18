@@ -31,6 +31,7 @@ const Navbar = () => {
     { to: "/", label: "Главная" },
     { to: "/catalog", label: "Каталог" },
     { to: "/cart", label: "Корзина" },
+    { to: "/orders", label: "Заказы" },
   ];
 
   const handleSignOut = async () => {

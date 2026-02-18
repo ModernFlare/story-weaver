@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import Index from "./pages/Index";
 import Catalog from "./pages/Catalog";
 import Cart from "./pages/Cart";
+import Orders from "./pages/Orders";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/catalog" element={<Catalog />} />
             <Route path="/cart" element={<Cart />} />
+            <Route path="/orders" element={<Orders />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
