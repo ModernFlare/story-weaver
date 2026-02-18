@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ShoppingCart, Menu, X, Leaf, User, LogOut } from "lucide-react";
+import { ShoppingCart, Menu, X, Leaf, User, LogOut, ShieldAlert } from "lucide-react";
+import { useIsAdmin } from "@/hooks/use-role";
 import { useCart } from "@/lib/store";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -17,6 +18,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const { getTotalItems } = useCart();
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
   const location = useLocation();
   const navigate = useNavigate();
   const totalItems = getTotalItems();
@@ -32,6 +34,7 @@ const Navbar = () => {
     { to: "/catalog", label: "Каталог" },
     { to: "/cart", label: "Корзина" },
     { to: "/orders", label: "Заказы" },
+    ...(isAdmin ? [{ to: "/admin", label: "Админ" }] : []),
   ];
 
   const handleSignOut = async () => {
