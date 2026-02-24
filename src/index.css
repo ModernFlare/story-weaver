@@ -232,3 +232,41 @@ em {
   align-items: center;
   justify-content: center;
 }
+
+/* Лаб. раб. №2, Задание 1: CSS псевдоклассы для валидации форм */
+/* :required — обязательное поле */
+.auth-form input:required {
+  border-left: 3px solid hsl(var(--primary));
+}
+
+/* :optional — необязательное поле */
+.auth-form input:optional {
+  border-left: 3px solid hsl(var(--muted-foreground) / 0.3);
+}
+
+/* :focus — подсветка текущего поля */
+.auth-form input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.3);
+  border-color: hsl(var(--primary));
+}
+
+/* :valid — правильно заполненное поле */
+.auth-form input:valid:not(:placeholder-shown) {
+  border-color: hsl(var(--success));
+  background-color: hsl(var(--success) / 0.05);
+}
+
+/* :invalid — неправильно заполненное поле */
+.auth-form input:invalid:not(:placeholder-shown) {
+  border-color: hsl(var(--destructive));
+  background-color: hsl(var(--destructive) / 0.05);
+}
+
+/* Сообщение об ошибке валидации */
+.validation-error {
+  color: hsl(var(--destructive));
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+  min-height: 1rem;
+}
