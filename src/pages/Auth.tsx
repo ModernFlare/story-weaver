@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -9,21 +9,79 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Leaf, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+/* Лаб. раб. №2, Задание 2: JS-валидация полей формы */
+
+/** Проверка имени: только буквы (кириллица/латиница), ровно одна заглавная (первая) */
+const validateName = (value: string): string => {
+  if (!value.trim()) return "Поле обязательно для заполнения";
+  if (value.length < 2) return "Минимум 2 символа";
+  if (value.length > 50) return "Максимум 50 символов";
+  if (!/^[a-zA-Zа-яА-ЯёЁ]+$/.test(value)) return "Только буквы (без пробелов, цифр и спецсимволов)";
+  const upperCount = (value.match(/[A-ZА-ЯЁ]/g) || []).length;
+  if (upperCount !== 1) return "Должна быть ровно одна заглавная буква";
+  if (!/^[A-ZА-ЯЁ]/.test(value)) return "Первая буква должна быть заглавной";
+  return "";
+};
+
+/** Проверка email по маске */
+const validateEmail = (value: string): string => {
+  if (!value.trim()) return "Поле обязательно для заполнения";
+  if (value.length > 255) return "Максимум 255 символов";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(value)) return "Введите корректный email (например, user@mail.com)";
+  return "";
+};
+
+/** Проверка пароля: мин. 6 символов, макс. 128 */
+const validatePassword = (value: string): string => {
+  if (!value) return "Поле обязательно для заполнения";
+  if (value.length < 6) return "Минимум 6 символов";
+  if (value.length > 128) return "Максимум 128 символов";
+  return "";
+};
+
 const Auth = () => {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
+  // Login state
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
+  const [loginErrors, setLoginErrors] = useState<{ email: string; password: string }>({ email: "", password: "" });
 
-  const [regName, setRegName] = useState("");
+  // Register state
+  const [regFirstName, setRegFirstName] = useState("");
+  const [regLastName, setRegLastName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPassword, setRegPassword] = useState("");
   const [regLoading, setRegLoading] = useState(false);
+  const [regErrors, setRegErrors] = useState<{ firstName: string; lastName: string; email: string; password: string }>({
+    firstName: "", lastName: "", email: "", password: "",
+  });
+
+  /* Задание 2: JS-валидация при вводе (onBlur) */
+  const validateLoginField = useCallback((field: "email" | "password", value: string) => {
+    setLoginErrors(prev => ({
+      ...prev,
+      [field]: field === "email" ? validateEmail(value) : validatePassword(value),
+    }));
+  }, []);
+
+  const validateRegField = useCallback((field: "firstName" | "lastName" | "email" | "password", value: string) => {
+    let error = "";
+    if (field === "firstName" || field === "lastName") error = validateName(value);
+    else if (field === "email") error = validateEmail(value);
+    else error = validatePassword(value);
+    setRegErrors(prev => ({ ...prev, [field]: error }));
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    const emailErr = validateEmail(loginEmail);
+    const passErr = validatePassword(loginPassword);
+    setLoginErrors({ email: emailErr, password: passErr });
+    if (emailErr || passErr) return;
+
     setLoginLoading(true);
     const { error } = await signIn(loginEmail, loginPassword);
     setLoginLoading(false);
@@ -37,12 +95,16 @@ const Auth = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (regPassword.length < 6) {
-      toast.error("Пароль должен содержать минимум 6 символов");
-      return;
-    }
+    const firstNameErr = validateName(regFirstName);
+    const lastNameErr = validateName(regLastName);
+    const emailErr = validateEmail(regEmail);
+    const passErr = validatePassword(regPassword);
+    setRegErrors({ firstName: firstNameErr, lastName: lastNameErr, email: emailErr, password: passErr });
+    if (firstNameErr || lastNameErr || emailErr || passErr) return;
+
     setRegLoading(true);
-    const { error } = await signUp(regEmail, regPassword, regName);
+    const fullName = `${regFirstName} ${regLastName}`;
+    const { error } = await signUp(regEmail, regPassword, fullName);
     setRegLoading(false);
     if (error) {
       toast.error("Ошибка регистрации: " + error.message);
@@ -75,9 +137,10 @@ const Auth = () => {
               <TabsTrigger value="register">Регистрация</TabsTrigger>
             </TabsList>
 
+            {/* Задание 1: CSS-псевдоклассы :valid, :invalid, :required, :optional */}
             <TabsContent value="login">
-              <form onSubmit={handleLogin} className="space-y-4 mt-4">
-                <div className="space-y-2">
+              <form onSubmit={handleLogin} className="auth-form space-y-4 mt-4" noValidate>
+                <div className="space-y-1">
                   <Label htmlFor="login-email">Email</Label>
                   <Input
                     id="login-email"
@@ -85,10 +148,13 @@ const Auth = () => {
                     placeholder="example@mail.com"
                     value={loginEmail}
                     onChange={(e) => setLoginEmail(e.target.value)}
+                    onBlur={() => validateLoginField("email", loginEmail)}
                     required
+                    maxLength={255}
                   />
+                  {loginErrors.email && <p className="validation-error">{loginErrors.email}</p>}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="login-password">Пароль</Label>
                   <Input
                     id="login-password"
@@ -96,8 +162,12 @@ const Auth = () => {
                     placeholder="••••••"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
+                    onBlur={() => validateLoginField("password", loginPassword)}
                     required
+                    minLength={6}
+                    maxLength={128}
                   />
+                  {loginErrors.password && <p className="validation-error">{loginErrors.password}</p>}
                 </div>
                 <Button type="submit" className="w-full" disabled={loginLoading}>
                   {loginLoading ? <Loader2 className="animate-spin" /> : "Войти"}
@@ -106,19 +176,42 @@ const Auth = () => {
             </TabsContent>
 
             <TabsContent value="register">
-              <form onSubmit={handleRegister} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="reg-name">Имя</Label>
+              <form onSubmit={handleRegister} className="auth-form space-y-4 mt-4" noValidate>
+                <div className="space-y-1">
+                  <Label htmlFor="reg-firstname">Имя</Label>
                   <Input
-                    id="reg-name"
+                    id="reg-firstname"
                     type="text"
-                    placeholder="Иван Иванов"
-                    value={regName}
-                    onChange={(e) => setRegName(e.target.value)}
+                    placeholder="Иван"
+                    value={regFirstName}
+                    onChange={(e) => setRegFirstName(e.target.value)}
+                    onBlur={() => validateRegField("firstName", regFirstName)}
                     required
+                    minLength={2}
+                    maxLength={50}
+                    pattern="[a-zA-Zа-яА-ЯёЁ]+"
+                    title="Только буквы, одна заглавная (первая)"
                   />
+                  {regErrors.firstName && <p className="validation-error">{regErrors.firstName}</p>}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
+                  <Label htmlFor="reg-lastname">Фамилия</Label>
+                  <Input
+                    id="reg-lastname"
+                    type="text"
+                    placeholder="Иванов"
+                    value={regLastName}
+                    onChange={(e) => setRegLastName(e.target.value)}
+                    onBlur={() => validateRegField("lastName", regLastName)}
+                    required
+                    minLength={2}
+                    maxLength={50}
+                    pattern="[a-zA-Zа-яА-ЯёЁ]+"
+                    title="Только буквы, одна заглавная (первая)"
+                  />
+                  {regErrors.lastName && <p className="validation-error">{regErrors.lastName}</p>}
+                </div>
+                <div className="space-y-1">
                   <Label htmlFor="reg-email">Email</Label>
                   <Input
                     id="reg-email"
@@ -126,10 +219,13 @@ const Auth = () => {
                     placeholder="example@mail.com"
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
+                    onBlur={() => validateRegField("email", regEmail)}
                     required
+                    maxLength={255}
                   />
+                  {regErrors.email && <p className="validation-error">{regErrors.email}</p>}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <Label htmlFor="reg-password">Пароль</Label>
                   <Input
                     id="reg-password"
@@ -137,9 +233,12 @@ const Auth = () => {
                     placeholder="Минимум 6 символов"
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
+                    onBlur={() => validateRegField("password", regPassword)}
                     required
                     minLength={6}
+                    maxLength={128}
                   />
+                  {regErrors.password && <p className="validation-error">{regErrors.password}</p>}
                 </div>
                 <Button type="submit" className="w-full" disabled={regLoading}>
                   {regLoading ? <Loader2 className="animate-spin" /> : "Зарегистрироваться"}
