@@ -23,41 +23,44 @@ const validateName = (value: string): string => {
   return "";
 };
 
-/** Автокоррекция популярных доменов */
+/** Расстояние Левенштейна */
+const levenshtein = (a: string, b: string): number => {
+  const m = a.length, n = b.length;
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  );
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] = Math.min(
+        dp[i - 1][j] + 1,
+        dp[i][j - 1] + 1,
+        dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+  return dp[m][n];
+};
+
+/** Автокоррекция: fuzzy-match к популярным доменам (порог ≤ 2) */
+const POPULAR_DOMAINS = [
+  "gmail.com", "mail.ru", "yandex.ru", "yandex.com", "yahoo.com",
+  "hotmail.com", "outlook.com", "icloud.com", "bk.ru", "inbox.ru",
+  "list.ru", "rambler.ru", "ya.ru",
+];
+
 const fixEmailDomain = (email: string): string => {
-  const domainFixes: Record<string, string> = {
-    "gmail.com": "gmail.com", "gmail.con": "gmail.com", "gmial.com": "gmail.com",
-    "gmal.com": "gmail.com", "gmai.com": "gmail.com", "gamil.com": "gmail.com",
-    "mail.ru": "mail.ru", "maik.ru": "mail.ru", "mai.ru": "mail.ru", "mial.ru": "mail.ru",
-    "yandex.ru": "yandex.ru", "yanex.ru": "yandex.ru", "yadex.ru": "yandex.ru",
-    "yandex.com": "yandex.com", "yanedx.ru": "yandex.ru",
-    "yahoo.com": "yahoo.com", "yahooo.com": "yahoo.com", "yaho.com": "yahoo.com",
-    "hotmail.com": "hotmail.com", "hotmai.com": "hotmail.com", "hotmal.com": "hotmail.com",
-    "outlok.com": "outlook.com", "outlock.com": "outlook.com",
-    "iclod.com": "icloud.com",
-    "bk.ru": "bk.ru", "bk.ry": "bk.ru",
-    "inbox.ru": "inbox.ru", "inbx.ru": "inbox.ru",
-    "list.ru": "list.ru", "lisr.ru": "list.ru",
-  };
   const parts = email.split("@");
   if (parts.length !== 2) return email;
   const domain = parts[1].toLowerCase();
-  // Также исправляем .cok → .com, .ry → .ru
-  const suffixFixes: Record<string, string> = {
-    ".cok": ".com", ".cpm": ".com", ".con": ".com", ".vom": ".com",
-    ".ry": ".ru", ".ru": ".ru",
-  };
-  let fixedDomain = domainFixes[domain];
-  if (!fixedDomain) {
-    fixedDomain = domain;
-    for (const [typo, fix] of Object.entries(suffixFixes)) {
-      if (fixedDomain.endsWith(typo) && typo !== fix) {
-        fixedDomain = fixedDomain.slice(0, -typo.length) + fix;
-        break;
-      }
-    }
+  if (POPULAR_DOMAINS.includes(domain)) return email;
+
+  let bestDomain = domain;
+  let bestDist = Infinity;
+  for (const pop of POPULAR_DOMAINS) {
+    const dist = levenshtein(domain, pop);
+    if (dist < bestDist) { bestDist = dist; bestDomain = pop; }
   }
-  return parts[0] + "@" + fixedDomain;
+  // Исправляем только при расстоянии ≤ 2 (1–2 опечатки)
+  if (bestDist > 0 && bestDist <= 2) return parts[0] + "@" + bestDomain;
+  return email;
 };
 
 /** Проверка email по маске */
