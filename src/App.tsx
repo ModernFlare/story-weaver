@@ -33,6 +33,7 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/feedback" element={<Feedback />} />
+            <Route path="/klm" element={<KLM />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

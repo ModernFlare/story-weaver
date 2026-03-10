@@ -34,6 +34,7 @@ const Navbar = () => {
     { to: "/catalog", label: "Каталог" },
     { to: "/cart", label: "Корзина" },
     { to: "/feedback", label: "Обратная связь" },
+    { to: "/klm", label: "KLM" },
     ...(isAdmin ? [{ to: "/admin", label: "Админ" }] : []),
   ];
 
