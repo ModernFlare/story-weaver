@@ -12,6 +12,7 @@ import Orders from "./pages/Orders";
 import Auth from "./pages/Auth";
 import Admin from "./pages/Admin";
 import Feedback from "./pages/Feedback";
+import KLM from "./pages/KLM";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
