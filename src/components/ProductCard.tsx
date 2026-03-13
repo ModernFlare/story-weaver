@@ -2,6 +2,7 @@ import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Product, useCart } from "@/lib/store";
 import { cn } from "@/lib/utils";
+import ReactionButtons from "@/components/ReactionButtons";
 
 interface ProductCardProps {
   product: Product;
