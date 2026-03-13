@@ -31,6 +31,9 @@ const ProductCard = ({ product }: ProductCardProps) => {
         <h3 className="font-semibold text-foreground text-sm leading-tight">{product.name}</h3>
         <p className="text-xs text-muted-foreground line-clamp-2">{product.description}</p>
 
+        {/* Лаб. раб. №6: Like/Dislike без перезагрузки, JSON + Realtime */}
+        <ReactionButtons productId={product.id} />
+
         {/* Задание 2.2: border, margin, padding */}
         <div className="flex items-center justify-between pt-3 mt-2 border-t border-border">
           <div>
